@@ -176,6 +176,37 @@ def main(arguv):
                 print(resultant.result())
 
 
+def verb0(verb,seq_record):
+    if not verb:
+        continue
+    else:
+        print('\x1b[6;37;40m' + str(seq_record.id) + '\x1b[0m')
+    
+def verb1(verb,f_left_str,f_match_str,f_right_str):
+    if not verb:
+        continue
+    else:
+        return "Step 1: Match primers and correctly rearrange the sequence\n Forward Primer Match:\n" +str(f_left_str) + '\x1b[6;30;42m' + str(f_match_str) + '\x1b[0m' + str(f_right_str)
+
+def verb2(verb,seq_record,full_seq,mini_read_len_thres,max_read_len_thres,r_left_str,r_match_str,r_right_str):
+    if not verb:
+        if ((len(full_seq)>=mini_read_len_thres) and (len(full_seq)<=max_read_len_thres)):
+            return ">" + str(seq_record.id) + "_corrected_length=" + str(len(full_seq)) + "\n" + str(full_sequence)
+        else:
+        return ("Reverse Primer Match:\n" + str(r_left_str) + '\x1b[6;30;43m' + str(r_match_str) + '\x1b[0m' + str(r_right_str)
+def verb3(verb,f_left_string,f_match_string,f_right_string):
+    if not verb:
+        continue
+    else:
+        print ("Step 1: Match primers and correctly rearrange the sequence \n Reverse Primer Match (Reverse Orientation):\n"+ str(f_left_str) + '\x1b[6;30;42m' + str(f_match_str) + '\x1b[0m' + str(f_right_str)
+        
+
+def verb4(verb,seq_record,full_seq,mini_read_len_thres,max_read_len_thres,r_left_str,r_match_str,r_right_str):
+    if not verb:
+        if ((len(full_seq)>=mini_read_len_thres) and (len(full_seq)<=max_read_len_thres)):
+            return ">"+str(seq_record.id)+"_corrected_sequence="+str(len(full_seq))+"\n"+str(full_seq)
+    else:
+        return'Forward Primer Match (Reverse Orientation):\n'+ str(r_left_string) + '\x1b[6;30;43m' + str(r_match_string) + '\x1b[0m' + str(r_right_string)
 
 def process_seq_records(seq_record,forward_primer,reverse_primer,verbosity,minimum_read_length_threshold,maximum_read_length_threshold):
     #used in step1
@@ -189,11 +220,8 @@ def process_seq_records(seq_record,forward_primer,reverse_primer,verbosity,minim
     tandem_threshold=10
     tandem_mismatch=5
     tandem_identity_threshold=85
-    
 
-    if verbosity:
-        print('\x1b[6;37;40m' + str(seq_record.id) + '\x1b[0m')
-    
+    verb0(verbosity)
 
     forward_orientation_forward_primer_alignment=align.localms(str(seq_record.seq),forward_primer,primer_match_score, primer_mismatch_score, primer_open_gap_score, primer_extend_gap_score, one_alignment_only=1)
     
@@ -213,13 +241,7 @@ def process_seq_records(seq_record,forward_primer,reverse_primer,verbosity,minim
         f_match_string=str(forward_orientation_forward_primer_alignment[0][0][f_match_left_position:f_match_right_position])
         f_right_string=str(forward_orientation_forward_primer_alignment[0][0][(f_match_right_position):])
 
-
-
-        if verbosity:
-            print ("Step 1: Match primers and correctly rearrange the sequence")
-            print ('Forward Primer Match:')
-            print(f_left_string + '\x1b[6;30;42m' + f_match_string + '\x1b[0m' + f_right_string)
-
+        verb1(verbosity,f_left_string,f_match_string,f_right_string)
 
         r_match_left_position=forward_orientation_reverse_primer_alignment[0][3]
         r_match_right_position=forward_orientation_reverse_primer_alignment[0][4]
@@ -228,16 +250,10 @@ def process_seq_records(seq_record,forward_primer,reverse_primer,verbosity,minim
         r_right_string=str(forward_orientation_reverse_primer_alignment[0][0][(r_match_right_position):])
 
 
-
-        if verbosity:
-            print ('Reverse Primer Match:')
-            print(r_left_string + '\x1b[6;30;43m' + r_match_string + '\x1b[0m' + r_right_string)
-
-
         #See if there is a right-over hang after the reverse primer and remove it
         ind_r=f_right_string.find(r_match_string.replace("-",""))
 
-        if (ind_r > -1):
+        if ind_r > -1:
 
             f_right_string=f_right_string[0:ind_r]
 
@@ -245,20 +261,14 @@ def process_seq_records(seq_record,forward_primer,reverse_primer,verbosity,minim
         full_sequence=f_match_string + f_right_string + f_left_string
         full_sequence=full_sequence.replace("-","")
         full_sequence=process_etandem_record(full_sequence,verbosity,tandem_min_repeat,tandem_max_repeat,tandem_threshold,tandem_mismatch,tandem_identity_threshold)
-        if not verbosity:
-            if ((len(full_sequence)>=minimum_read_length_threshold) and (len(full_sequence)<=maximum_read_length_threshold)):
-                return ">" + str(seq_record.id) + "_corrected_length=" + str(len(full_sequence)) + "\n" + str(full_sequence)
+        verb2(verbosity,seq_record,full_sequence,minimum_read_length_threshold,maxiumum_read_length_threshold,r_left_string,r_match_string, r_right_string)
     else:
         f_match_left_position=reverse_orientation_forward_primer_alignment[0][3]
         f_match_right_position=reverse_orientation_forward_primer_alignment[0][4]
         f_left_string=str(reverse_orientation_forward_primer_alignment[0][0][0:(f_match_left_position)])
         f_match_string=str(reverse_orientation_forward_primer_alignment[0][0][f_match_left_position:f_match_right_position])
         f_right_string=str(reverse_orientation_forward_primer_alignment[0][0][(f_match_right_position):])
-        if verbosity:
-            print ("Step 1: Match primers and correctly rearrange the sequence")
-            print ('Reverse Primer Match (Reverse Orientation):')
-            print(f_left_string + '\x1b[6;30;42m' + f_match_string + '\x1b[0m' + f_right_string)
-
+        verb3(verbosity,f_left_string,f_match_string,f_right_string)
 
         r_match_left_position=reverse_orientation_reverse_primer_alignment[0][3]
         r_match_right_position=reverse_orientation_reverse_primer_alignment[0][4]
@@ -274,23 +284,14 @@ def process_seq_records(seq_record,forward_primer,reverse_primer,verbosity,minim
             f_right_string=f_right_string[0:ind_r]
 
 
-        if verbosity:
-            print ('Forward Primer Match (Reverse Orientation):')
-            print(r_left_string + '\x1b[6;30;43m' + r_match_string + '\x1b[0m' + r_right_string)
+        verb3(verbosity,f_left_string,f_match_string,f_right_string)
                         
         full_sequence=f_match_string + f_right_string + f_left_string
         full_sequence=full_sequence.replace("-","")
         full_sequence=str(Seq(full_sequence).reverse_complement())
 
-
         full_sequence=process_etandem_record(full_sequence,verbosity,tandem_min_repeat,tandem_max_repeat,tandem_threshold,tandem_mismatch,tandem_identity_threshold)
-
-
-        if not verbosity:
-            if ((len(full_sequence)>=minimum_read_length_threshold) and (len(full_sequence)<=maximum_read_length_threshold)):
-
-                return ">"+str(seq_record.id)+"_corrected_sequence="+str(len(full_sequence))+"\n"+str(full_sequence)
-
+        verb4(verbosity,seq_record,full_sequence,minimum_read_length_threshold,maxiumum_read_length_threshold,r_left_string,r_match_string, r_right_string)
 
 if __name__== "__main__":
     main(argv[1:])
